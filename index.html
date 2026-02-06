@@ -8,17 +8,140 @@ body{font-family:Arial;background:#f4f4f4;padding:10px}
 input,button,label{width:100%;padding:6px;margin:4px 0;font-size:14px}
 canvas{max-width:100%;margin-top:10px;border:1px solid #ccc}
 .controls{background:#fff;padding:10px;border-radius:8px}
+/* ===== BACKGROUND TẾT ===== */
+body{
+  margin:0;
+  background: linear-gradient(135deg,#a80000,#ff6a00,#ffd54f);
+  min-height:100vh;
+}
+
+/* nền mờ */
+.bg{
+  position:fixed;
+  inset:0;
+  backdrop-filter: blur(6px);
+  z-index:0;
+}
+
+/* ===== APP ===== */
+.app{
+  position:relative;
+  z-index:2;
+  max-width:520px;
+  margin:auto;
+}
+
+/* ===== HEADER ===== */
+.header{
+  text-align:center;
+  color:#fff;
+  margin-bottom:10px;
+}
+.header h2{
+  margin:10px 0 4px;
+}
+.tet{
+  font-size:14px;
+  opacity:.9;
+}
+
+/* ===== CARD ===== */
+.controls{
+  background:rgba(255,255,255,0.18);
+  backdrop-filter:blur(14px);
+  border-radius:18px;
+  box-shadow:0 20px 40px rgba(0,0,0,.25);
+  color:#fff;
+}
+
+/* input */
+.controls input,
+.controls button{
+  border-radius:12px;
+}
+
+/* canvas */
+canvas{
+  background:#000;
+  border-radius:18px;
+  box-shadow:0 15px 35px rgba(0,0,0,.4);
+}
+
+/* ===== HOA RƠI ===== */
+.petals{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+}
+@keyframes fall{
+  to{transform:translateY(120vh)}
+}
+@keyframes sway{
+  0%{margin-left:0}
+  50%{margin-left:30px}
+  100%{margin-left:0}
+}
+
 </style>
 </head>
 
 <body>
+<div class="bg"></div>
+<div class="petals" id="petals"></div>
 
-<h3>📍 Timemark Style Pro</h3>
+<div class="app">
+  <header class="header">
+    <h2>📍 Timemark ver2 📍</h2>
+    <p class="tet">🌸 Chúc mừng năm mới – An khang · Thịnh vượng 🌸</p>
+  </header>
+<div id="toast" style="
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%) translateY(-10px);
+  background:rgba(0,0,0,0.78);
+  color:#fff;
+  padding:14px 18px 12px;
+  border-radius:12px;
+  font-size:14px;
+  line-height:1.45;
+  z-index:9999;
+  opacity:0;
+  transition:opacity .4s, transform .4s;
+  pointer-events:none;
+  max-width:90%;
+  box-shadow:0 8px 30px rgba(0,0,0,.35);
+">
+  <div style="margin-bottom:10px">
+    <b>👋 Chào mừng bạn đến với Timemark</b><br>
+    • B1: Thêm ảnh check-in Và ảnh logo Cty (nếu cần)<br>
+    • B2: Bấm lấy ngày giờ ( có thể nhập thủ công)<br>
+    • B3: Nhấn <b>“Tạo watermark”</b> để tạo ảnh<br>
+    <span style="opacity:.7">❌❌ App do IT ấn độ làm, ai khai ra bắn bỏ❌❌</span>
+  </div>
+
+  <div style="text-align:right">
+    <button onclick="hideToast()" style="
+      background:#FFC107;
+      color:#000;
+      border:none;
+      padding:6px 14px;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+    ">
+      OK
+    </button>
+  </div>
+</div>
+
 
 <div class="controls">
-<label>Thêm ảnh check-in </label>
+<label>Thêm ảnh check-in</label>
 <input type="file" id="imageInput" accept="image/*">
-<label>Thêm ảnh logo </label>
+
+<label>Thêm ảnh logo</label>
 <input type="file" id="logoInput" accept="image/*">
 
 <label>Giờ</label>
@@ -33,6 +156,13 @@ canvas{max-width:100%;margin-top:10px;border:1px solid #ccc}
 <label>Địa chỉ (Xã, Huyện, Tỉnh)</label>
 <input type="text" id="address">
 
+<hr>
+<label><input type="checkbox" id="toggleLogo" checked> Hiển thị logo</label>
+<label><input type="checkbox" id="toggleTime" checked> Hiển thị giờ / ngày</label>
+<label><input type="checkbox" id="toggleAddress" checked> Hiển thị địa chỉ</label>
+<label><input type="checkbox" id="toggleBrand" checked> Hiển thị Timemark</label>
+<label><input type="checkbox" id="toggleVertical" checked> Hiển thị watermark dọc</label>
+
 <button onclick="setNow()">⏱ Lấy giờ hiện tại</button>
 <button onclick="draw()">🖊 Tạo watermark</button>
 <button onclick="download()">⬇️ Tải ảnh</button>
@@ -40,9 +170,16 @@ canvas{max-width:100%;margin-top:10px;border:1px solid #ccc}
 
 <canvas id="c"></canvas>
 
+
 <script>
 const c = document.getElementById("c");
 const ctx = c.getContext("2d");
+
+function isOn(id){
+  const el = document.getElementById(id);
+  return el ? el.checked : true;
+}
+
 let img = new Image();
 let logo = new Image();
 
@@ -73,7 +210,6 @@ function drawRoundedImage(ctx, img, x, y, w, h, r){
   ctx.restore();
 }
 
-
 imageInput.onchange = e=>{
  const r=new FileReader();
  r.onload=()=>img.src=r.result;
@@ -93,25 +229,17 @@ img.onload=()=>{
 };
 
 function setNow(){
-  const d = new Date();
+ const d=new Date();
 
-  // Giờ HH:mm (có số 0)
-  time.value = d.toLocaleTimeString("vi-VN", {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+ time.value=d.toLocaleTimeString("vi-VN",{hour:'2-digit',minute:'2-digit'});
 
-  // Ngày DD/MM/YYYY (có số 0)
-  const day   = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year  = d.getFullYear();
+ const day=String(d.getDate()).padStart(2,'0');
+ const month=String(d.getMonth()+1).padStart(2,'0');
+ const year=d.getFullYear();
+ date.value=`${day}/${month}/${year}`;
 
-  date.value = `${day}/${month}/${year}`;
-
-  // Thứ (viết chữ)
-  weekday.value = d.toLocaleDateString("vi-VN", { weekday: 'long' });
+ weekday.value=d.toLocaleDateString("vi-VN",{weekday:'long'});
 }
-
 
 function draw(){
  if(!img.src) return alert("Chưa chọn ảnh");
@@ -120,119 +248,143 @@ function draw(){
  const pad=fs(0.04);
 
  /* ===== WATERMARK DỌC ===== */
- ctx.save();
- ctx.translate(c.width-fs(0.008),c.height/2);
- ctx.rotate(-Math.PI/2);
- ctx.fillStyle="rgba(255,255,255,0.9)";
- ctx.font=`${fs(0.018)}px Arial`;
- ctx.textAlign="center";
- ctx.fillText(` ${generateCode()}  Timemark Verified`,0,0);
- ctx.restore();
+ if(isOn("toggleVertical")){
+  ctx.save();
+  ctx.translate(c.width-fs(0.008),c.height/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillStyle="rgba(255,255,255,0.9)";
+  ctx.font=`${fs(0.018)}px Arial`;
+  ctx.textAlign="center";
+  ctx.fillText(`${generateCode()}  Timemark Verified`,0,0);
+  ctx.restore();
+ }
 
  /* ===== BRAND PHẢI DƯỚI ===== */
-let yBrand = c.height - pad;
-ctx.textAlign = "right";
-ctx.font = `bold ${fs(0.028)}px Arial`;
+ if(isOn("toggleBrand")){
+  let yBrand=c.height-pad;
+  ctx.textAlign="right";
+  ctx.font=`bold ${fs(0.028)}px Arial`;
 
-/* đo chiều rộng chữ mark */
-ctx.fillStyle = "#FFFFFF";
-ctx.fillText("mark", c.width - pad, yBrand);
-const wMark = ctx.measureText("mark").width;
+  ctx.fillStyle="#FFFFFF";
+  ctx.fillText("mark",c.width-pad,yBrand);
+  const wMark=ctx.measureText("mark").width;
 
-/* vẽ chữ Time liền trước mark */
-ctx.fillStyle = "#FFC107";
-ctx.fillText("Time", c.width - pad - wMark, yBrand);
+  ctx.fillStyle="#FFC107";
+  ctx.fillText("Time",c.width-pad-wMark,yBrand);
 
-/* dòng phụ */
-ctx.font = `${fs(0.018)}px Arial`;
-ctx.fillStyle = "rgba(255,255,255,0.5)";
-ctx.fillText("100% Chân thực", c.width - pad, yBrand + fs(0.03));
-
+  ctx.font=`${fs(0.018)}px Arial`;
+  ctx.fillStyle="rgba(255,255,255,0.5)";
+  ctx.fillText("100% Chân thực",c.width-pad,yBrand+fs(0.03));
+ }
 
  /* ===== CỤM TRÁI DƯỚI ===== */
  ctx.textAlign="left";
- let leftX = pad;
- let y = c.height - pad - fs(0.09);
+ let leftX=pad;
+ let y=c.height-pad-fs(0.09);
 
- /* LOGO – ĐẨY LÊN CAO HƠN */
-if(logo.src){
-  const lh = fs(0.085);
-  const ratio = logo.width / logo.height;
+ /* LOGO */
+ if(logo.src && isOn("toggleLogo")){
+  const lh=fs(0.085);
+  const ratio=logo.width/logo.height;
+  drawRoundedImage(ctx,logo,leftX,y-lh-fs(0.02),lh*ratio,lh,fs(0.012));
+  y+=fs(0.02);
+ }
 
-  const logoW = lh * ratio;
-  const logoX = leftX;
-  const logoY = y - lh - fs(0.02);
-  const radius = fs(0.012); // độ bo góc mềm
+ /* GIỜ | NGÀY | THỨ */
+ let lineX=leftX;
+ if(isOn("toggleTime")){
+  ctx.font=`500 ${fs(0.045)}px "Inter","Helvetica Neue",Arial,sans-serif`;
+  ctx.fillStyle="#FFFFFF";
+  ctx.fillText(time.value,leftX,y+fs(0.015));
 
-  drawRoundedImage(
-    ctx,
-    logo,
-    logoX,
-    logoY,
-    logoW,
-    lh,
-    radius
-  );
+  const timeW=ctx.measureText(time.value).width;
+  lineX=leftX+timeW+fs(0.02);
 
-  y += fs(0.02);
+  ctx.strokeStyle="#FFFFFF";
+  ctx.lineWidth=fs(0.004);
+  ctx.beginPath();
+  ctx.moveTo(lineX,y-fs(0.028));
+  ctx.lineTo(lineX,y+fs(0.028));
+  ctx.stroke();
+
+  ctx.font=`${fs(0.03)}px "Inter","Helvetica Neue",Arial,sans-serif`;
+  ctx.fillText(date.value,lineX+fs(0.015),y-fs(0.01));
+  ctx.fillText(weekday.value,lineX+fs(0.015),y+fs(0.03));
+ }
+
+ /* ĐỊA CHỈ */
+ if(isOn("toggleAddress")){
+  y+=fs(0.065);
+  ctx.font=`${fs(0.028)}px "Inter","Helvetica Neue",Arial,sans-serif`;
+  ctx.fillStyle="rgba(255,255,255,0.9)";
+  ctx.fillText(address.value,leftX,y);
+ }
 }
 
-
- /* GIỜ | NGÀY – THỨ */
-ctx.font = `500 ${fs(0.045)}px "Inter","Helvetica Neue",Arial,sans-serif`;
- ctx.fillStyle="#FFFFFF";
- ctx.fillText(time.value,leftX,y+fs(0.015));
-
- const timeW = ctx.measureText(time.value).width;
- const lineX = leftX + timeW + fs(0.02);
-
- /* THANH KẺ DỌC – MÀU TRẮNG */
- ctx.strokeStyle="#FFFFFF";
- ctx.lineWidth=fs(0.004);
- ctx.beginPath();
- ctx.moveTo(lineX,y-fs(0.028));
- ctx.lineTo(lineX,y+fs(0.028));
- ctx.stroke();
-
-ctx.font = `${fs(0.03)}px "Inter","Helvetica Neue",Arial,sans-serif`;
-ctx.fillText(date.value, lineX + fs(0.015), y - fs(0.01));
-ctx.fillText(weekday.value, lineX + fs(0.015), y + fs(0.03));
-
-
-/* ĐỊA CHỈ */
-y += fs(0.065);
-ctx.font = `${fs(0.028)}px "Inter","Helvetica Neue",Arial,sans-serif`;
-ctx.fillStyle = "rgba(255,255,255,0.9)";
-ctx.fillText(address.value, leftX, y);
-
-}
- //tải ảnh về
+/* ===== DOWNLOAD ===== */
 function isIOS(){
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+ return /iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
 function download(){
-  if(!img.src) return alert("Chưa có ảnh để tải");
-
-  const dataURL = c.toDataURL("image/png");
-
-  if(isIOS()){
-    // iOS: mở ảnh ra tab mới để lưu thủ công
-    const w = window.open();
-    w.document.write(`
-      <img src="${dataURL}" 
-           style="width:100%;height:auto;display:block">
-      <p style="text-align:center;font-family:sans-serif">
-        Nhấn giữ ảnh → Lưu vào Ảnh
-      </p>
-    `);
-  }else{
-    // Android / PC
-    const a = document.createElement("a");
-    a.href = dataURL;
-    a.download = "timemark.png";
-    a.click();
+ if(!img.src) return alert("Chưa có ảnh để tải");
+ const d=c.toDataURL("image/png");
+ if(isIOS()){
+  const w=window.open();
+  w.document.write(`<img src="${d}" style="width:100%"><p>Nhấn giữ ảnh → Lưu</p>`);
+ }else{
+  const a=document.createElement("a");
+  a.href=d;a.download="timemark.png";a.click();
+ }
+}
+// Hiện toast sau khi trang load xong (an toàn)
+setTimeout(() => {
+  if(typeof showToast === "function"){
+    showToast();
   }
+}, 300);
+
+/* ===== HOA RƠI NHẸ ===== */
+const flowers=["🌸","🌼","🌺"];
+const box=document.getElementById("petals");
+for(let i=0;i<25;i++){
+  const p=document.createElement("div");
+  p.innerText=flowers[Math.floor(Math.random()*flowers.length)];
+  p.style.position="absolute";
+  p.style.left=Math.random()*100+"vw";
+  p.style.top="-10%";
+  p.style.fontSize=(14+Math.random()*18)+"px";
+  p.style.opacity=0.85;
+  p.style.animation=
+    `fall ${10+Math.random()*10}s linear infinite,
+     sway ${3+Math.random()*4}s ease-in-out infinite`;
+  box.appendChild(p);
+}
+/* ===== TOAST WELCOME ===== */
+window.addEventListener("load", ()=>{
+  const t = document.getElementById("toast");
+  if(!t) return;
+
+  t.style.opacity = "1";
+  t.style.transform = "translateX(-50%) translateY(10px)";
+
+  setTimeout(()=>{
+    t.style.opacity = "0";
+    t.style.transform = "translateX(-50%) translateY(-10px)";
+  }, 3500000);
+});
+function showToast(){
+  const t = document.getElementById("toast");
+  t.style.opacity = "1";
+  t.style.transform = "translateX(-50%) translateY(0)";
+  t.style.pointerEvents = "auto";
+}
+
+function hideToast(){
+  const t = document.getElementById("toast");
+  t.style.opacity = "0";
+  t.style.transform = "translateX(-50%) translateY(-10px)";
+  t.style.pointerEvents = "none";
 }
 
 </script>
