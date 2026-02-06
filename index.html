@@ -93,11 +93,25 @@ img.onload=()=>{
 };
 
 function setNow(){
- const d=new Date();
- time.value=d.toLocaleTimeString("vi-VN",{hour:'2-digit',minute:'2-digit'});
- date.value=d.toLocaleDateString("vi-VN");
- weekday.value=d.toLocaleDateString("vi-VN",{weekday:'long'});
+  const d = new Date();
+
+  // Giờ HH:mm (có số 0)
+  time.value = d.toLocaleTimeString("vi-VN", {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  // Ngày DD/MM/YYYY (có số 0)
+  const day   = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year  = d.getFullYear();
+
+  date.value = `${day}/${month}/${year}`;
+
+  // Thứ (viết chữ)
+  weekday.value = d.toLocaleDateString("vi-VN", { weekday: 'long' });
 }
+
 
 function draw(){
  if(!img.src) return alert("Chưa chọn ảnh");
@@ -165,7 +179,7 @@ if(logo.src){
 
 
  /* GIỜ | NGÀY – THỨ */
- ctx.font=`bold ${fs(0.045)}px Arial`;
+ctx.font = `500 ${fs(0.045)}px "Inter","Helvetica Neue",Arial,sans-serif`;
  ctx.fillStyle="#FFFFFF";
  ctx.fillText(time.value,leftX,y+fs(0.015));
 
@@ -180,22 +194,47 @@ if(logo.src){
  ctx.lineTo(lineX,y+fs(0.028));
  ctx.stroke();
 
- ctx.font=`${fs(0.03)}px Arial`;
- ctx.fillText(date.value,lineX+fs(0.015),y-fs(0.01));
- ctx.fillText(weekday.value,lineX+fs(0.015),y+fs(0.03));
+ctx.font = `${fs(0.03)}px "Inter","Helvetica Neue",Arial,sans-serif`;
+ctx.fillText(date.value, lineX + fs(0.015), y - fs(0.01));
+ctx.fillText(weekday.value, lineX + fs(0.015), y + fs(0.03));
 
- /* ĐỊA CHỈ */
- y += fs(0.065);
- ctx.font=`${fs(0.028)}px Arial`;
- ctx.fillStyle="rgba(255,255,255,0.9)";
- ctx.fillText(address.value,leftX,y);
+
+/* ĐỊA CHỈ */
+y += fs(0.065);
+ctx.font = `${fs(0.028)}px "Inter","Helvetica Neue",Arial,sans-serif`;
+ctx.fillStyle = "rgba(255,255,255,0.9)";
+ctx.fillText(address.value, leftX, y);
+
+}
+ //tải ảnh về
+function isIOS(){
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
 function download(){
- const d=c.toDataURL("image/png");
- const a=document.createElement("a");
- a.href=d;a.download="timemark.png";a.click();
+  if(!img.src) return alert("Chưa có ảnh để tải");
+
+  const dataURL = c.toDataURL("image/png");
+
+  if(isIOS()){
+    // iOS: mở ảnh ra tab mới để lưu thủ công
+    const w = window.open();
+    w.document.write(`
+      <img src="${dataURL}" 
+           style="width:100%;height:auto;display:block">
+      <p style="text-align:center;font-family:sans-serif">
+        Nhấn giữ ảnh → Lưu vào Ảnh
+      </p>
+    `);
+  }else{
+    // Android / PC
+    const a = document.createElement("a");
+    a.href = dataURL;
+    a.download = "timemark.png";
+    a.click();
+  }
 }
+
 </script>
 </body>
 </html>
