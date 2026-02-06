@@ -16,8 +16,9 @@ canvas{max-width:100%;margin-top:10px;border:1px solid #ccc}
 <h3>📍 Timemark Style Pro</h3>
 
 <div class="controls">
+<label>Thêm ảnh check-in </label>
 <input type="file" id="imageInput" accept="image/*">
-<label>Logo công ty</label>
+<label>Thêm ảnh logo </label>
 <input type="file" id="logoInput" accept="image/*">
 
 <label>Giờ</label>
@@ -54,6 +55,25 @@ function generateCode(len=12){
  return Array.from({length:len},()=>s[Math.random()*s.length|0]).join("");
 }
 
+function drawRoundedImage(ctx, img, x, y, w, h, r){
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(img, x, y, w, h);
+  ctx.restore();
+}
+
+
 imageInput.onchange = e=>{
  const r=new FileReader();
  r.onload=()=>img.src=r.result;
@@ -87,43 +107,62 @@ function draw(){
 
  /* ===== WATERMARK DỌC ===== */
  ctx.save();
- ctx.translate(c.width-fs(0.02),c.height/2);
+ ctx.translate(c.width-fs(0.008),c.height/2);
  ctx.rotate(-Math.PI/2);
- ctx.fillStyle="rgba(255,255,255,0.7)";
- ctx.font=`${fs(0.022)}px Arial`;
+ ctx.fillStyle="rgba(255,255,255,0.9)";
+ ctx.font=`${fs(0.018)}px Arial`;
  ctx.textAlign="center";
  ctx.fillText(` ${generateCode()}  Timemark Verified`,0,0);
  ctx.restore();
 
  /* ===== BRAND PHẢI DƯỚI ===== */
- let yBrand = c.height-pad;
- ctx.textAlign="right";
- ctx.font=`bold ${fs(0.035)}px Arial`;
+let yBrand = c.height - pad;
+ctx.textAlign = "right";
+ctx.font = `bold ${fs(0.028)}px Arial`;
 
- ctx.fillStyle="#FFC107";
- ctx.fillText("mark",c.width-pad,yBrand);
+/* đo chiều rộng chữ mark */
+ctx.fillStyle = "#FFFFFF";
+ctx.fillText("mark", c.width - pad, yBrand);
+const wMark = ctx.measureText("mark").width;
 
- const wTime = ctx.measureText("mark").width;
+/* vẽ chữ Time liền trước mark */
+ctx.fillStyle = "#FFC107";
+ctx.fillText("Time", c.width - pad - wMark, yBrand);
 
- ctx.fillStyle="#FFFFFF";
- ctx.fillText("Time",c.width-pad-wTime,yBrand);
+/* dòng phụ */
+ctx.font = `${fs(0.018)}px Arial`;
+ctx.fillStyle = "rgba(255,255,255,0.5)";
+ctx.fillText("100% Chân thực", c.width - pad, yBrand + fs(0.03));
 
- ctx.font=`${fs(0.022)}px Arial`;
- ctx.fillStyle="rgba(255,255,255,0.6)";
- ctx.fillText("100% Chân thực",c.width-pad,yBrand+fs(0.03));
 
  /* ===== CỤM TRÁI DƯỚI ===== */
  ctx.textAlign="left";
  let leftX = pad;
- let y = c.height - pad - fs(0.18);
+ let y = c.height - pad - fs(0.09);
 
  /* LOGO – ĐẨY LÊN CAO HƠN */
- if(logo.src){
+if(logo.src){
   const lh = fs(0.085);
-  const ratio = logo.width/logo.height;
-  ctx.drawImage(logo,leftX,y-lh- fs(0.015),lh*ratio,lh);
+  const ratio = logo.width / logo.height;
+
+  const logoW = lh * ratio;
+  const logoX = leftX;
+  const logoY = y - lh - fs(0.02);
+  const radius = fs(0.012); // độ bo góc mềm
+
+  drawRoundedImage(
+    ctx,
+    logo,
+    logoX,
+    logoY,
+    logoW,
+    lh,
+    radius
+  );
+
   y += fs(0.02);
- }
+}
+
 
  /* GIỜ | NGÀY – THỨ */
  ctx.font=`bold ${fs(0.045)}px Arial`;
