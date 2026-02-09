@@ -240,8 +240,6 @@ function setNow(){
  date.value=`${day} tháng ${month}, ${year}`;
  weekday.value=d.toLocaleDateString("vi-VN",{weekday:'long'});
 }
-
-/* ===== GPS ===== */
 function getGPS(){
   if(!navigator.geolocation){
     alert("Thiết bị không hỗ trợ GPS");
@@ -253,20 +251,25 @@ function getGPS(){
       const lat = pos.coords.latitude.toFixed(6);
       const lng = pos.coords.longitude.toFixed(6);
 
-      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+      alert("GPS OK: " + lat + ", " + lng); // test, xoá sau
+
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+        { headers:{ "Accept":"application/json" } }
+      )
         .then(r=>r.json())
         .then(data=>{
           if(data.address){
             const a = data.address;
 
             const xa =
-              a.village || a.suburb || a.town || "";
+              a.village || a.suburb || a.hamlet || a.town || "";
 
             const huyen =
-              a.county || a.district || "";
+              a.county || a.district || a.city || "";
 
             const tinh =
-              a.state || "";
+              a.state || a.region || "";
 
             address.value = [
               xa ? `X. ${xa}` : "",
@@ -277,16 +280,17 @@ function getGPS(){
             address.value = `${lat}, ${lng}`;
           }
         })
-        .catch(()=>{
+        .catch(err=>{
+          alert("Fetch lỗi");
           address.value = `${lat}, ${lng}`;
         });
     },
     err=>{
-      alert("Không lấy được GPS. Vui lòng bật định vị.");
+      alert("Không lấy được GPS: " + err.message);
     },
     {
       enableHighAccuracy:true,
-      timeout:10000,
+      timeout:15000,
       maximumAge:0
     }
   );
